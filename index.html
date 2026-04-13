@@ -69,7 +69,7 @@
         if(!form.spieler||!form.partner)return null;
         const w=form.gewonnen?[form.spieler,form.partner]:active.filter(p=>p!==form.spieler&&p!==form.partner);
         const l=active.filter(p=>!w.includes(p));
-        w.forEach(p=>d[p]=+B*l.length);l.forEach(p=>d[p]=-B*w.length);
+        w.forEach(p=>d[p]=+B);l.forEach(p=>d[p]=-Math.round(B*w.length/l.length));
       }else if(typeCfg.cat==="solo"){
         if(!form.solist)return null;
         const gegner=active.filter(p=>p!==form.solist);
