@@ -52,10 +52,11 @@
     function calcBetrag(form,typeCfg,tariff){
       const base=typeCfg.useDefaultTariff?(typeCfg.cat==="2vs2"?tariff.sauspiel:typeCfg.cat==="ramsch"?tariff.sauspiel:tariff.solo):(typeCfg.customBetrag||25);
       let mods=0;
-      if(typeCfg.hasSchneiderSchwarz){mods+=(form.schneider?1:0)+(form.schwarz?1:0);}
+      const isTout=typeCfg.hasTout&&form.tout;
+      if(!isTout&&typeCfg.hasSchneiderSchwarz){mods+=(form.schneider?1:0)+(form.schwarz?1:0);}
       if(typeCfg.hasLaufende){const minL=typeCfg.laufendeFrom||3;mods+=form.laufende>=minL?form.laufende-(minL-1):0;}
       let b=base+mods*tariff.sl;
-      if(typeCfg.hasTout&&form.tout)b*=2;
+      if(isTout)b*=2;
       return b;
     }
 
@@ -365,7 +366,17 @@
           </div>
         </div>}
 
-        {typeCfg.cat!=="ramsch"&&<ErgebnisBlock form={form} upd={upd} typeCfg={typeCfg}/>}
+        {typeCfg.cat!=="ramsch"&&!form.tout&&<ErgebnisBlock form={form} upd={upd} typeCfg={typeCfg}/>}
+        {typeCfg.cat!=="ramsch"&&form.tout&&<div style={s.card()}>
+          <div style={s.sec}>Ergebnis</div>
+          <div style={{display:"flex",gap:8,marginBottom:12}}>
+            <button style={{...s.btn(form.gewonnen,"#7de87a"),flex:1,fontSize:14,padding:10}} onClick={()=>upd("gewonnen",true)}>✓ Gewonnen</button>
+            <button style={{...s.btn(!form.gewonnen,"#e85d4a"),flex:1,fontSize:14,padding:10}} onClick={()=>upd("gewonnen",false)}>✗ Verloren</button>
+          </div>
+          {typeCfg.hasLaufende&&<Stepper label="Laufende" value={form.laufende} max={8} onChange={v=>upd("laufende",v)}
+            hint={form.laufende>=(typeCfg.laufendeFrom||3)?`→ +${form.laufende-(typeCfg.laufendeFrom||3)-1} × S&L (×2)`:`Zählt ab ${typeCfg.laufendeFrom||3}`}/>}
+          <div style={{fontSize:10,color:C.dim,marginTop:8}}>Tout: Schneider & Schwarz werden nicht gerechnet</div>
+        </div>}
 
         <div style={s.card()}>
           <div style={s.sec}>Sticht (Kontra / Re)</div>
@@ -508,7 +519,7 @@
       const [nav,setNav]            = useState("home");
       const [players,setPlayers]    = useState(sv?.players||["Spieler 1","Spieler 2","Spieler 3","Spieler 4"]);
       const [tariff,setTariff]      = useState(sv?.tariff||{sl:25,sauspiel:25,solo:50});
-      const [startkapital,setStart] = useState(sv?.startkapital||1100);
+      const [startkapital,setStart] = useState(sv?.startkapital||1500);
       const [rounds,setRounds]      = useState(sv?.rounds||[]);
       const [gameTypes,setGameTypes]= useState(()=>{const saved=sv?.gameTypes;if(saved&&saved.length>0)return saved;return DEFAULT_GAME_TYPES;});
       const [selType,setSelType]    = useState(null);
@@ -610,12 +621,15 @@
                 {nav==="settings"&&"Einstellungen"}
               </div>
             </div>
-            <div style={{textAlign:"right",fontSize:10,color:C.mute}}>
-              <div>Runde {rounds.length}</div>
+            <div style={{textAlign:"right",fontSize:10,color:"#e8ead0"}}>
               <div>S&L {tariff.sl} · Ssp {tariff.sauspiel} · Solo {tariff.solo}</div>
             </div>
           </div>
-          <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:6,marginTop:8}}>
+          <div style={{background:"#0f1f0f",border:`1px solid ${C.border}`,borderRadius:8,padding:"6px 12px",margin:"8px 0",textAlign:"center"}}>
+            <span style={{fontSize:9,color:C.dim,letterSpacing:2,marginRight:8}}>RUNDE</span>
+            <span style={{fontSize:22,fontWeight:"bold",color:"#a0d0a0"}}>{rounds.length}</span>
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:6}}>
             {standings.map((p,i)=><div key={p.name} style={{textAlign:"center"}}>
               <div style={{fontSize:9,color:p.color}}>{p.name}</div>
               <div style={{fontSize:14,fontWeight:"bold",color:"#e8ead0"}}>{p.value.toLocaleString("de-DE")}</div>
@@ -780,7 +794,7 @@
                 <button onClick={()=>{if(window.confirm("Alles zurücksetzen? Runden UND Einstellungen werden auf Standard zurückgesetzt.")){
                   setPlayers(["Spieler 1","Spieler 2","Spieler 3","Spieler 4"]);
                   setTariff({sl:25,sauspiel:25,solo:50});
-                  setStart(1100);
+                  setStart(1500);
                   setGameTypes(DEFAULT_GAME_TYPES);
                   setRounds([]);
                 }}} style={{...s.btn(false,"#e85d4a"),flex:1,padding:8}}>🔄 Alles zurücksetzen</button>
