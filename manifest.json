@@ -2,7 +2,7 @@
   "name": "Schafkopf Tracker",
   "short_name": "Schafkopf",
   "description": "Schafkopf Spielabend Tracker – Runden erfassen, Stände verfolgen, Ergebnisse teilen",
-  "start_url": "./schafkopf.html",
+  "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
